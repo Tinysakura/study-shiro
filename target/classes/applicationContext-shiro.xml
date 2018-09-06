@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+     http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+     <!-- shiroFilter对象 -->
+     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+     	<property name="securityManager" ref="securityManager"/>
+		<property name="loginUrl" value="/user/loginpage"/>
+		<property name="unauthorizedUrl" value="/403.html"/>
+		<property name="filterChainDefinitions">
+		     <value>
+		         /user/loginpage = anon
+		         /user/login = anon
+		         /* = authc
+		         /user/perms1 = perms["user:delete"]
+		         /user/perms2 = perms["user:select"]
+		         /user/admin = roles["admin"]
+		         #自定义的过滤器，只要多个权限中有一个满足即可
+		         /user/users = rolesOr["admin","user"]
+		     </value>
+		 </property>
+		 
+		 <property name="filters">
+		     <map>
+		       <entry key="rolesOr" value-ref="rolesOrFilter" />
+		     </map>
+		 </property>
+     </bean>
+     
+     <!-- 创建securityManager -->
+     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+         <property name="realm" ref="realm"></property>
+         <property name="sessionManager" ref="sessionManager"></property>
+     </bean>
+     
+     <!-- 创建realm -->
+     <bean id="realm" class="com.cfh.studyshiro.common.CustomeRealm">
+     </bean>
+     
+     <!-- 自定义过滤器 -->
+     <bean id="rolesOrFilter" class="com.cfh.studyshiro.filter.RolesOrFilter" />
+     
+     <!-- 注入自定义的sessionDao -->
+     <bean id="redisSessionDao" class="com.cfh.studyshiro.common.RedisSessionDao" />
+     
+     <!-- 在sessionManager中引入自定义的sessionDao -->
+     <bean id="sessionManager" class="com.cfh.studyshiro.common.CustomSessionManager">
+        <property name="sessionDAO" ref="redisSessionDao" />
+        <!-- 关闭cookie -->
+        <!-- <property name="sessionIdCookieEnabled" value="false" /> -->
+     </bean>
+</beans>
